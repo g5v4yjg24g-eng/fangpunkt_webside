@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>E-Mail-Signatur – Fangpunkt</title>
+<meta name="theme-color" content="#0b2a33">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../style.css">
+<style>
+  form { display: grid; gap: 12px; }
+  label { display: grid; gap: 4px; font-weight: 600; }
+  input {
+    font: inherit; min-height: 44px; padding: 0 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  }
+  input:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+  .preview { background: #ffffff; color: #0e2229; border-radius: 12px; padding: 16px; border: 1px solid var(--border); overflow-x: auto; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  button.button { border: 0; font: inherit; cursor: pointer; }
+  .status { min-height: 1.5em; }
+  ol li { margin-block: 4px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="../"><img src="../favicon.svg" alt="" width="32" height="32"> Fangpunkt</a>
+</header>
+<main>
+<section class="prose">
+  <h1>E-Mail-Signatur</h1>
+  <p>Name und Adresse eintragen, dann kopieren und im Mailprogramm einfügen. Es wird nichts gespeichert oder übertragen.</p>
+  <form id="f" autocomplete="off">
+    <label>Vor- und Nachname <input id="name" value="Kevin Freiwald" required></label>
+    <label>Funktion (optional) <input id="role" placeholder="z. B. Kundendienst"></label>
+    <label>E-Mail-Adresse <input id="mail" type="email" value="kundendienst@fangpunkt.com" required></label>
+  </form>
+</section>
+
+<section>
+  <h2>Vorschau</h2>
+  <div class="preview" id="sig"></div>
+  <div class="row" style="margin-top:16px">
+    <button class="button" type="button" id="copy">Signatur kopieren</button>
+    <button class="button secondary" type="button" id="copyHtml">HTML kopieren</button>
+  </div>
+  <p class="status muted" id="status" role="status"></p>
+</section>
+
+<section class="prose">
+  <h2>Einfügen</h2>
+  <h3>Webmail (Roundcube)</h3>
+  <ol>
+    <li>Einstellungen → Identitäten → deine Adresse</li>
+    <li>Bei „Signatur“ den <strong>HTML-Modus</strong> einschalten (Symbol „HTML“ bzw. „&lt;&gt;“ im Editor)</li>
+    <li>„HTML kopieren“ hier antippen und dort einfügen → Speichern</li>
+  </ol>
+  <h3>Apple Mail (iPhone)</h3>
+  <ol>
+    <li>Diese Seite in <strong>Safari</strong> öffnen, „Signatur kopieren“ antippen</li>
+    <li>Einstellungen → Apps → Mail → Signatur → in das Feld tippen → Einfügen</li>
+    <li>Tipp: Das iPhone einmal schütteln und „Widerrufen“ wählen, falls Formatierungen verloren gehen – dann bleibt die Version mit Logo</li>
+  </ol>
+  <h3>Gmail-App</h3>
+  <p>Die Gmail-App kann Signaturen nur als einfachen Text (ohne Logo). Name, Funktion und Adresse einfach von Hand eintragen.</p>
+</section>
+</main>
+<footer>
+  <p><a href="../">Fangpunkt</a></p>
+</footer>
+<script>
+  const LOGO = 'https://fangpunkt.com/mail/fangpunkt-logo.png';
+  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const $ = (id) => document.getElementById(id);
+
+  function html() {
+    const name = esc($('name').value.trim());
+    const role = esc($('role').value.trim());
+    const mail = esc($('mail').value.trim());
+    const font = "font-family:Arial,Helvetica,sans-serif;";
+    return `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;${font}color:#0e2229;">
+<tr>
+<td style="padding:0 14px 0 0;vertical-align:middle;">
+<a href="https://fangpunkt.com" style="text-decoration:none;"><img src="${LOGO}" width="56" height="56" alt="Fangpunkt" style="display:block;border:0;width:56px;height:56px;border-radius:12px;"></a>
+</td>
+<td style="padding:0 0 0 14px;border-left:2px solid #0f5c6e;vertical-align:middle;${font}font-size:14px;line-height:1.45;">
+<div style="font-size:15px;font-weight:bold;color:#0e2229;">${name}</div>${role ? `
+<div style="color:#4a5f66;">${role}</div>` : ''}
+<div style="color:#0f5c6e;font-weight:bold;">Fangpunkt</div>
+<div><a href="mailto:${mail}" style="color:#0f5c6e;text-decoration:none;">${mail}</a></div>
+<div><a href="https://fangpunkt.com" style="color:#0f5c6e;text-decoration:none;">fangpunkt.com</a></div>
+</td>
+</tr>
+</table>`;
+  }
+  function text() {
+    const role = $('role').value.trim();
+    return [$('name').value.trim(), role, 'Fangpunkt', $('mail').value.trim(), 'fangpunkt.com'].filter(Boolean).join('\n');
+  }
+  function render() { $('sig').innerHTML = html(); }
+  function say(msg) { $('status').textContent = msg; }
+
+  async function copyRich() {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html()], { type: 'text/html' }),
+        'text/plain': new Blob([text()], { type: 'text/plain' }),
+      })]);
+      say('Signatur kopiert – jetzt im Mailprogramm einfügen.');
+    } catch {
+      // Ersatz: Vorschau markieren und über den Browser kopieren
+      const r = document.createRange();
+      r.selectNodeContents($('sig'));
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      const ok = document.execCommand && document.execCommand('copy');
+      say(ok ? 'Signatur kopiert – jetzt im Mailprogramm einfügen.' : 'Vorschau ist markiert – bitte über „Kopieren“ selbst kopieren.');
+    }
+  }
+  async function copyHtml() {
+    try { await navigator.clipboard.writeText(html()); say('HTML kopiert.'); }
+    catch { say('Kopieren nicht möglich – bitte den Browser erlauben lassen oder „Signatur kopieren“ nutzen.'); }
+  }
+
+  ['name', 'role', 'mail'].forEach((id) => $(id).addEventListener('input', render));
+  $('copy').addEventListener('click', copyRich);
+  $('copyHtml').addEventListener('click', copyHtml);
+  render();
+</script>
+</body>
+</html>
