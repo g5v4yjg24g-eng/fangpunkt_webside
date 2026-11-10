@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["8QS58CR3VS.com.fangpunkt.app"],
+        "components": [
+          { "/": "/profil/*", "?": { "u": "?*" }, "comment": "Geteiltes Profil öffnet die Fangpunkt-App" }
+        ]
+      }
+    ]
+  }
+}
